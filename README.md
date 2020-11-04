@@ -4,6 +4,10 @@ Generates data for [courses-frontend](https://github.com/magnusviri/courses-fron
 
 Right now all this does is scrape the [source webpages](https://student.apps.utah.edu/uofu/stu/ClassSchedules/main/1216/) and save JSON files.
 
+## Install Vagrant and Laravel
+
+I use [Homestead](https://laravel.com/docs/8.x/homestead#introduction).
+
 ## Install and run dev environment
 
 	git clone https://github.com/magnusviri/courses-backend.git
