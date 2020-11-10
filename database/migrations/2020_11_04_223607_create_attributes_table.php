@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateGenEdTable extends Migration
+class CreateAttributesTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,12 +13,11 @@ class CreateGenEdTable extends Migration
      */
     public function up()
     {
-        Schema::create('gened', function (Blueprint $table) {
+        Schema::create('attributes', function (Blueprint $table) {
             $table->id();
             $table->timestamps();
-
-            $table->string('gened');
-
+            $table->string('attr');
+            $table->string('desc');
         });
     }
 
@@ -29,6 +28,6 @@ class CreateGenEdTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('gened');
+        Schema::dropIfExists('attributes');
     }
 }

@@ -17,3 +17,16 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
+
+JsonApi::register('default')->routes(function ($api) {
+    $api->resource('courses')->relationships(function ($relations) {
+        $relations->hasMany('instructors');
+        $relations->hasMany('attributes');
+    });
+    $api->resource('instructors')->relationships(function ($relations) {
+        $relations->hasMany('courses');
+    });
+    $api->resource('attributes')->relationships(function ($relations) {
+        $relations->hasMany('courses');
+    });
+});

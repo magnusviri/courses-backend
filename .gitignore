@@ -12,15 +12,3 @@ npm-debug.log
 yarn-error.log
 
 .DS_Store
-# # Laravel 4 specific
-# bootstrap/compiled.php
-# app/storage/
-#
-# # Laravel 5 & Lumen specific
-#
-#
-# # Laravel 5 & Lumen specific with changed public path
-# public_html/storage
-# public_html/hot
-#
-# /.vagrant

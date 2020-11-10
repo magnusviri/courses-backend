@@ -8,8 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 class Instructor extends Model
 {
     use HasFactory;
-    public function pastcourses()
+    public function courses()
     {
-        return $this->belongsToMany('App\Models\PastCourse');
+        return $this->hasMany('App\Models\Course');
     }
 }
