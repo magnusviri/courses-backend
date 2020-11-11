@@ -16,7 +16,6 @@ class CreateCoursesTable extends Migration
         Schema::create('courses', function (Blueprint $table) {
             $table->id();
             $table->timestamps();
-
             $table->integer('cat');
             $table->integer('sec');
             $table->string('com');
@@ -24,17 +23,15 @@ class CreateCoursesTable extends Migration
             $table->integer('num');
             $table->string('nam');
             $table->integer('enr');
-            $table->string('des');
+            $table->longText('des');
             $table->integer('cap');
             $table->string('typ');
             $table->string('uni');
-            // $table->string('ins');
-            // $table->string('att');
-            $table->string('fee');
-            // $table->string('gen');
             $table->integer('yea');
             $table->integer('sem');
-
+            $table->string('fee')->nullable();
+            $table->string('rek')->nullable();
+            $table->string('syl')->nullable();
         });
     }
 

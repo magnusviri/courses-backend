@@ -8,12 +8,13 @@ use Illuminate\Database\Eloquent\Model;
 class Course extends Model
 {
     use HasFactory;
-    public function attrs()
+    protected $guarded = [];
+    public function attributes()
     {
-        return $this->hasMany('App\Models\Attribute');
+        return $this->belongsToMany('App\Models\Attribute');
     }
     public function instructors()
     {
-        return $this->hasMany('App\Models\Instructor');
+        return $this->belongsToMany('App\Models\Instructor');
     }
 }

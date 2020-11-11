@@ -6,6 +6,6 @@
         <title>Courses</title>
     </head>
     <body>
-    API
+    API yes
     </body>
 </html>

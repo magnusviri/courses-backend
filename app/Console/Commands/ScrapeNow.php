@@ -6,6 +6,9 @@ use Illuminate\Console\Command;
 use Goutte\Client;
 use Symfony\Component\HttpClient\NativeHttpClient;
 use Illuminate\Support\Facades\Storage;
+use App\Models\Attribute;
+use App\Models\Course;
+use App\Models\Instructor;
 
 class ScrapeNow extends Command
 {
@@ -156,32 +159,98 @@ class ScrapeNow extends Command
         $semcode = sprintf("%03d%d", $year-1900, $semester);
         if ($use_file and Storage::disk('local')->exists("{$semcode}.json")) {
             $this->data[$semcode] = json_decode(Storage::get("{$semcode}.json"), 1);
-            return;
-        }
-        $client = new Client();
-        echo "{$semcode} {$subject}\n";
-        echo "https://student.apps.utah.edu/uofu/stu/ClassSchedules/main/{$semcode}/class_list.html?subject={$subject}\n";
-        $crawler = $client->request('GET', "https://student.apps.utah.edu/uofu/stu/ClassSchedules/main/{$semcode}/class_list.html?subject={$subject}");
-        $semester_data = $crawler->filter('.class-info')->each(function($item, $i) {
-            return ScrapeNow::scrape_class_list($item, $i);
-        });
-        echo "\n";
+        } else {
+            $client = new Client();
+            echo "{$semcode} {$subject}\n";
+            echo "https://student.apps.utah.edu/uofu/stu/ClassSchedules/main/{$semcode}/class_list.html?subject={$subject}\n";
+            $crawler = $client->request('GET', "https://student.apps.utah.edu/uofu/stu/ClassSchedules/main/{$semcode}/class_list.html?subject={$subject}");
+            $semester_data = $crawler->filter('.class-info')->each(function($item, $i) {
+                return ScrapeNow::scrape_class_list($item, $i);
+            });
+            echo "\n";
 
-        $cleanuped_data = [];
-        foreach ( $semester_data as $course ) {
-            if ( $course ) {
-                $course['yea'] = $year;
-                $course['sem'] = $semester;
-                array_push($cleanuped_data, $course);
+            $cleanuped_data = [];
+            foreach ( $semester_data as $courseArray ) {
+                if ( $courseArray ) {
+                    $courseArray['yea'] = $year;
+                    $courseArray['sem'] = $semester;
+                    array_push($cleanuped_data, $courseArray);
+                }
+            }
+            if ($use_file) {
+                Storage::disk('local')->put("{$semcode}.json", json_encode($cleanuped_data));
+            }
+            $this->data[$semcode] = $cleanuped_data;
+        }
+
+        foreach ( $this->data[$semcode] as $courseArray ) {
+            if ( $courseArray ) {
+                $course = Course::firstOrNew([
+                    'cat' => $courseArray["cat"],
+                    'sec' => $courseArray["sec"],
+                    'com' => $courseArray["com"],
+                    'sub' => $courseArray["sub"],
+                    'num' => $courseArray["num"],
+                    'nam' => $courseArray["nam"],
+                    'enr' => $courseArray["enr"],
+                    'des' => $courseArray["des"],
+                    'cap' => $courseArray["cap"],
+                    'typ' => $courseArray["typ"],
+                    'uni' => $courseArray["uni"],
+                    'yea' => $courseArray['yea'],
+                    'sem' => $courseArray['sem'],
+                ]);
+                if ( array_key_exists("fee", $courseArray) ) {
+                    $course->fee = $courseArray["fee"];
+                }
+                if ( array_key_exists("rek", $courseArray) ) {
+                    $course->rek = $courseArray["rek"];
+                }
+                if ( array_key_exists("syl", $courseArray) ) {
+                    $course->syl = $courseArray["syl"];
+                }
+                $course->save();
+                if ( array_key_exists("ins", $courseArray) ) {
+                    foreach ( $courseArray['ins'] as $instructorArray ) {
+                        if ( $instructorArray ) {
+                            $instructor = Instructor::firstOrCreate([
+                                'name' => $instructorArray[0],
+                                'unid' => $instructorArray[1],
+                            ]);
+                            $course->instructors()->save($instructor);
+                        }
+                    }
+                }
+                if ( array_key_exists("att", $courseArray) ) {
+                    foreach ( $courseArray['att'] as $attributeText ) {
+                        if ( $attributeText ) {
+                            $attribute = Attribute::firstOrCreate([
+                                'attr' => $attributeText,
+                            ]);
+                            $course->attributes()->save($attribute);
+                        }
+                    }
+                }
+                // $course->req = $courseArray["req"];
+                // $course->gen = $courseArray["gen"];
+
+
+
             }
         }
 
-        if ($use_file) {
-            Storage::disk('local')->put("{$semcode}.json", json_encode($cleanuped_data));
-        }
-        $this->data[$semcode] = $cleanuped_data;
         return;
     }
+
+
+
+
+
+
+
+
+
+
 
     public function scrape_class_list($item, $i)
     {
@@ -330,28 +399,17 @@ class ScrapeNow extends Command
 
         $course2 = array();
         $course2['cat'] = (int)$course["Catalog Number"];
-        unset($course['Catalog Number']);
         $course2['sec'] = (int)$course["Section"];
-        unset($course['Section']);
         $course2['com'] = $course["Component"];
-        unset($course['Component']);
         $course2['sub'] = $course["Catalog Subject"];
-        unset($course['Catalog Subject']);
-        unset($course['Catalog Subject Number']);
         $course2['num'] = (int)$course["Class Number"];
-        unset($course['Class Number']);
         $course2['nam'] = $course["Course Name"];
-        unset($course['Course Name']);
         $course2['enr'] = (int)$course["Currently Enrolled"];
-        unset($course['Currently Enrolled']);
         $course2['des'] = $course["Description"];
-        unset($course['Description']);
         $course2['cap'] = (int)$course["Enrollment Cap"];
-        unset($course['Enrollment Cap']);
         $course2['typ'] = $course["Type"];
-        unset($course['Type']);
         $course2['uni'] = $course["Units"];
-        unset($course['Units']);
+
         if (array_key_exists('Instructor',$course)) {
             $course2['ins'] = $course["Instructor"];
             unset($course['Instructor']);
@@ -380,6 +438,19 @@ class ScrapeNow extends Command
             $course2['syl'] = $course["Syllabus URL"];
             unset($course['Syllabus URL']);
         }
+
+        unset($course['Catalog Number']);
+        unset($course['Section']);
+        unset($course['Component']);
+        unset($course['Catalog Subject']);
+        unset($course['Catalog Subject Number']);
+        unset($course['Class Number']);
+        unset($course['Course Name']);
+        unset($course['Currently Enrolled']);
+        unset($course['Description']);
+        unset($course['Enrollment Cap']);
+        unset($course['Type']);
+        unset($course['Units']);
         unset($course['Course Components']);
         unset($course['Description URL']);
         unset($course['Seats Available']);

@@ -8,8 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 class Instructor extends Model
 {
     use HasFactory;
+    protected $guarded = [];
     public function courses()
     {
-        return $this->hasMany('App\Models\Course');
+        return $this->belongsToMany('App\Models\Course');
     }
 }

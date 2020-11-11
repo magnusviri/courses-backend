@@ -17,7 +17,7 @@ class CreateAttributesTable extends Migration
             $table->id();
             $table->timestamps();
             $table->string('attr');
-            $table->string('desc');
+            $table->string('desc')->nullable();
         });
     }
 
