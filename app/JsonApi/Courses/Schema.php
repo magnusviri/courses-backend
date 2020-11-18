@@ -52,7 +52,7 @@ class Schema extends SchemaProvider
     public function getRelationships($resource, $isPrimary, array $includeRelationships)
     {
         return [
-            'attrs' => [
+            'attributes' => [
                 self::SHOW_SELF => true,
                 self::SHOW_RELATED => true,
             ],
@@ -62,6 +62,4 @@ class Schema extends SchemaProvider
             ]
         ];
     }
-    
-
 }

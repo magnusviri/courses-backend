@@ -34,7 +34,6 @@ class Schema extends SchemaProvider
             'updatedAt' => $resource->updated_at,
             'name' => $resource->name,
             'unid' => $resource->unid,
-            
         ];
     }
 
@@ -46,6 +45,5 @@ class Schema extends SchemaProvider
                 self::SHOW_RELATED => true,
             ]
         ];
+    }
 }
-
-// 
