@@ -33,7 +33,7 @@ Files will be saved to courses-backend/storage/app
 
 Set up a Linux server with apache, php, mysql, ssl, backup, firewall, and git.
 
-## Install node
+### Install node
 
 nvm - get instructions from https://github.com/nvm-sh/nvm
 
@@ -46,14 +46,14 @@ Show which versions can be installed
 	nvm list-remote
 	nvm install 10.9.0
 
-## Install composer
+### Install composer
 
 	curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 	/usr/local/bin/composer about
 
 Composer wants unzip so install it now if needed.
 
-## Download and configure Laravel backend
+### Download and configure Laravel backend
 
 	cd ~
 	git clone https://github.com/magnusviri/courses-backend.git
@@ -64,7 +64,7 @@ Composer wants unzip so install it now if needed.
 
 Set DB_PASSWORD in .env
 
-## Fix permissions and install Laravel backend
+### Fix permissions and install Laravel backend
 
 	cd ..
 	sudo chown -R apache:apache courses-backend
@@ -131,7 +131,7 @@ https://stackoverflow.com/questions/30639174/how-to-set-up-file-permissions-for-
 
 ## Installing the frontend
 
-The Laravel backend app is already configured for an Angular frontend app. Just put it in place.
+The Laravel backend app is already configured for an Angular [frontend](https://github.com/magnusviri/courses-frontend) app. Just put it in place.
 
 	cd your_angular_app_dir
 	ng build --prod
