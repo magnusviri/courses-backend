@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::any('/{any}', function () {
+    View::addExtension('html', 'php');
+    return View::make('index');
+})->where('any', '^(?!api).*$');

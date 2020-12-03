@@ -1,6 +1,6 @@
 <?php
 
-namespace App\JsonApi\Attributes;
+namespace App\JsonApi\Attrs;
 
 use Neomerx\JsonApi\Schema\SchemaProvider;
 
@@ -10,10 +10,10 @@ class Schema extends SchemaProvider
     /**
      * @var string
      */
-    protected $resourceType = 'attributes';
+    protected $resourceType = 'attrs';
 
     /**
-     * @param \App\Attribute $resource
+     * @param \App\Attr $resource
      *      the domain record being serialized.
      * @return string
      */
@@ -23,15 +23,15 @@ class Schema extends SchemaProvider
     }
 
     /**
-     * @param \App\Attribute $resource
+     * @param \App\Attr $resource
      *      the domain record being serialized.
      * @return array
      */
     public function getAttributes($resource)
     {
         return [
-            'createdAt' => $resource->created_at,
-            'updatedAt' => $resource->updated_at,
+//            'createdAt' => $resource->created_at,
+//            'updatedAt' => $resource->updated_at,
             'attr' => $resource->attr,
             'desc' => $resource->desc,
         ];
@@ -41,8 +41,8 @@ class Schema extends SchemaProvider
     {
         return [
             'courses' => [
-                self::SHOW_SELF => true,
-                self::SHOW_RELATED => true,
+                self::SHOW_SELF => false,
+                self::SHOW_RELATED => false,
             ]
         ];
     }

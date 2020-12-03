@@ -21,12 +21,12 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 JsonApi::register('default')->routes(function ($api) {
     $api->resource('courses')->relationships(function ($relations) {
         $relations->hasMany('instructors');
-        $relations->hasMany('attributes');
+        $relations->hasMany('attrs');
     });
     $api->resource('instructors')->relationships(function ($relations) {
         $relations->hasMany('courses');
     });
-    $api->resource('attributes')->relationships(function ($relations) {
+    $api->resource('attrs')->relationships(function ($relations) {
         $relations->hasMany('courses');
     });
 });

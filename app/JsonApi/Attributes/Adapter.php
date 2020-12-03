@@ -1,6 +1,6 @@
 <?php
 
-namespace App\JsonApi\Attributes;
+namespace App\JsonApi\Attrs;
 
 use CloudCreativity\LaravelJsonApi\Eloquent\AbstractAdapter;
 use CloudCreativity\LaravelJsonApi\Pagination\StandardStrategy;
@@ -15,7 +15,7 @@ class Adapter extends AbstractAdapter
      *
      * @var array
      */
-    protected $attributes = [];
+    protected $attribute = [];
 
     /**
      * Mapping of JSON API filter names to model scopes.
@@ -31,7 +31,7 @@ class Adapter extends AbstractAdapter
      */
     public function __construct(StandardStrategy $paging)
     {
-        parent::__construct(new \App\Models\Attribute(), $paging);
+        parent::__construct(new \App\Models\Attr(), $paging);
     }
 
     /**

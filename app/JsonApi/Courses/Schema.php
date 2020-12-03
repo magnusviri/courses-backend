@@ -30,7 +30,7 @@ class Schema extends SchemaProvider
     public function getAttributes($resource)
     {
         return [
-            'createdAt' => $resource->created_at,
+//            'createdAt' => $resource->created_at,
             'updatedAt' => $resource->updated_at,
             'cat' => $resource->cat,
             'sec' => $resource->sec,
@@ -43,22 +43,38 @@ class Schema extends SchemaProvider
             'cap' => $resource->cap,
             'typ' => $resource->typ,
             'uni' => $resource->uni,
-            'fee' => $resource->fee,
             'yea' => $resource->yea,
             'sem' => $resource->sem,
+            'fee' => $resource->fee,
+            'rek' => $resource->rek,
+            'syl' => $resource->syl,
         ];
     }
+
+//     public function getIncludePaths()
+//     {
+//         return ['instructors', 'attrs'];
+//     }
 
     public function getRelationships($resource, $isPrimary, array $includeRelationships)
     {
         return [
-            'attributes' => [
+            'attrs' => [
                 self::SHOW_SELF => true,
-                self::SHOW_RELATED => true,
+                self::SHOW_RELATED => false,
+//                self::SHOW_DATA => isset($includeRelationships['attrs']),
+//                self::DATA => function () use ($resource) {
+//                    return $resource->attrs;
+//                },
+
             ],
             'instructors' => [
                 self::SHOW_SELF => true,
-                self::SHOW_RELATED => true,
+                self::SHOW_RELATED => false,
+//                self::SHOW_DATA => isset($includeRelationships['instructors']),
+//                self::DATA => function () use ($resource) {
+//                    return $resource->instructors;
+//                },
             ]
         ];
     }

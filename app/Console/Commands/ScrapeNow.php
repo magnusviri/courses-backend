@@ -6,7 +6,7 @@ use Illuminate\Console\Command;
 use Goutte\Client;
 use Symfony\Component\HttpClient\NativeHttpClient;
 use Illuminate\Support\Facades\Storage;
-use App\Models\Attribute;
+use App\Models\Attr;
 use App\Models\Course;
 use App\Models\Instructor;
 
@@ -224,10 +224,10 @@ class ScrapeNow extends Command
                 if ( array_key_exists("att", $courseArray) ) {
                     foreach ( $courseArray['att'] as $attributeText ) {
                         if ( $attributeText ) {
-                            $attribute = Attribute::firstOrCreate([
+                            $attribute = Attr::firstOrCreate([
                                 'attr' => $attributeText,
                             ]);
-                            $course->attributes()->save($attribute);
+                            $course->attrs()->save($attribute);
                         }
                     }
                 }

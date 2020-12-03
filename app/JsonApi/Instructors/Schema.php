@@ -30,8 +30,8 @@ class Schema extends SchemaProvider
     public function getAttributes($resource)
     {
         return [
-            'createdAt' => $resource->created_at,
-            'updatedAt' => $resource->updated_at,
+//            'createdAt' => $resource->created_at,
+//            'updatedAt' => $resource->updated_at,
             'name' => $resource->name,
             'unid' => $resource->unid,
         ];
@@ -41,8 +41,8 @@ class Schema extends SchemaProvider
     {
         return [
             'courses' => [
-                self::SHOW_SELF => true,
-                self::SHOW_RELATED => true,
+                self::SHOW_SELF => false,
+                self::SHOW_RELATED => false,
             ]
         ];
     }

@@ -9,9 +9,9 @@ class Course extends Model
 {
     use HasFactory;
     protected $guarded = [];
-    public function attributes()
+    public function attrs()
     {
-        return $this->belongsToMany('App\Models\Attribute');
+        return $this->belongsToMany('App\Models\Attr');
     }
     public function instructors()
     {
