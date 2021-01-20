@@ -51,30 +51,24 @@ class Schema extends SchemaProvider
         ];
     }
 
-//     public function getIncludePaths()
-//     {
-//         return ['instructors', 'attrs'];
-//     }
-
     public function getRelationships($resource, $isPrimary, array $includeRelationships)
     {
         return [
             'attrs' => [
-                self::SHOW_SELF => true,
+                self::SHOW_SELF => false,
                 self::SHOW_RELATED => false,
-//                self::SHOW_DATA => isset($includeRelationships['attrs']),
-//                self::DATA => function () use ($resource) {
-//                    return $resource->attrs;
-//                },
-
+                self::SHOW_DATA => isset($includeRelationships['attrs']),
+                self::DATA => function () use ($resource) {
+                    return $resource->attrs;
+                },
             ],
             'instructors' => [
-                self::SHOW_SELF => true,
+                self::SHOW_SELF => false,
                 self::SHOW_RELATED => false,
-//                self::SHOW_DATA => isset($includeRelationships['instructors']),
-//                self::DATA => function () use ($resource) {
-//                    return $resource->instructors;
-//                },
+                self::SHOW_DATA => isset($includeRelationships['instructors']),
+                self::DATA => function () use ($resource) {
+                    return $resource->instructors;
+                },
             ]
         ];
     }

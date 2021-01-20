@@ -12,3 +12,13 @@ npm-debug.log
 yarn-error.log
 
 .DS_Store
+
+# Ignore Angular files
+
+/public/3rdpartylicenses.txt
+/public/assets/
+/public/main.*.js
+/public/old/
+/public/polyfills.*.js
+/public/runtime.*.js
+/public/styles.*.css
