@@ -48,6 +48,10 @@ class Schema extends SchemaProvider
             'fee' => $resource->fee,
             'rek' => $resource->rek,
             'syl' => $resource->syl,
+            'req' => $resource->req,
+            'sea' => $resource->sea,
+            'tba' => $resource->tba,
+            'wai' => $resource->wai,
         ];
     }
 
@@ -62,6 +66,14 @@ class Schema extends SchemaProvider
                     return $resource->attrs;
                 },
             ],
+            'description' => [
+                self::SHOW_SELF => false,
+                self::SHOW_RELATED => false,
+                self::SHOW_DATA => isset($includeRelationships['description']),
+                self::DATA => function () use ($resource) {
+                    return $resource->description;
+                },
+            ],
             'instructors' => [
                 self::SHOW_SELF => false,
                 self::SHOW_RELATED => false,
@@ -69,7 +81,31 @@ class Schema extends SchemaProvider
                 self::DATA => function () use ($resource) {
                     return $resource->instructors;
                 },
-            ]
+            ],
+            'meets-with' => [
+                self::SHOW_SELF => false,
+                self::SHOW_RELATED => false,
+                self::SHOW_DATA => isset($includeRelationships['meets-with']),
+                self::DATA => function () use ($resource) {
+                    return $resource->meetsWith;
+                },
+            ],
+            'special' => [
+                self::SHOW_SELF => false,
+                self::SHOW_RELATED => false,
+                self::SHOW_DATA => isset($includeRelationships['special']),
+                self::DATA => function () use ($resource) {
+                    return $resource->special;
+                },
+            ],
+            'when-where' => [
+                self::SHOW_SELF => false,
+                self::SHOW_RELATED => false,
+                self::SHOW_DATA => isset($includeRelationships['when-where']),
+                self::DATA => function () use ($resource) {
+                    return $resource->whenWhere;
+                },
+            ],
         ];
     }
 }

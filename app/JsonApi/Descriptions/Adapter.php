@@ -1,6 +1,6 @@
 <?php
 
-namespace App\JsonApi\Courses;
+namespace App\JsonApi\Descriptions;
 
 use CloudCreativity\LaravelJsonApi\Eloquent\AbstractAdapter;
 use CloudCreativity\LaravelJsonApi\Pagination\StandardStrategy;
@@ -31,7 +31,7 @@ class Adapter extends AbstractAdapter
      */
     public function __construct(StandardStrategy $paging)
     {
-        parent::__construct(new \App\Models\Course(), $paging);
+        parent::__construct(new \App\Models\Description(), $paging);
     }
 
     /**
@@ -44,32 +44,7 @@ class Adapter extends AbstractAdapter
         $this->filterWithScopes($query, $filters);
     }
 
-    protected function attrs()
-    {
-        return $this->hasMany();
-    }
-
-    protected function description()
-    {
-        return $this->belongsTo();
-    }
-
-    protected function instructors()
-    {
-        return $this->hasMany();
-    }
-
-    protected function meetsWith()
-    {
-        return $this->hasMany();
-    }
-
-    protected function special()
-    {
-        return $this->belongsTo();
-    }
-
-    protected function whenWhere()
+    protected function courses()
     {
         return $this->hasMany();
     }

@@ -68,7 +68,11 @@ return [
     'resources' => [
         'attrs' => \App\Models\Attr::class,
         'courses' => \App\Models\Course::class,
+        'descriptions' => \App\Models\Description::class,
         'instructors' => \App\Models\Instructor::class,
+        'meets-with' => \App\Models\MeetsWith::class,
+        'specials' => \App\Models\Special::class,
+        'when-where' => \App\Models\WhenWhere::class,
     ],
 
     /*

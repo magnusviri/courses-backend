@@ -1,16 +1,31 @@
 <?php
 
 # php artisan scrape:now
-# php artisan scrape:now --start=2020
-# php artisan scrape:now --end=2020
-# php artisan scrape:now --start=2020 --end=2020
+#
+# There's a good chance that you want to run this before you run the commands below.
+# Warning, this will blow away all of your data.
+#
+# php artisan migrate:fresh
+#
+# Specifying year. Listed in precedence order.
+#
+# php artisan scrape:now                            <- start = 1999, end = current year +1
+# php artisan scrape:now --year=2010                <- start and end = 2010
+# php artisan scrape:now --start=2011               <- start = 2011, end = current year +1
+# php artisan scrape:now --end=2012                 <- start = 1999, end = 2012
+# php artisan scrape:now --start=2013 --end=2014    <- start = 2013, end = 2014
 #
 # Other options.
 #
+# php artisan scrape:now --sem=6
 # php artisan scrape:now --nocache
 # php artisan scrape:now --nosave
 # php artisan scrape:now --sub=BIOL
 # php artisan scrape:now --verbose
+#
+# Putting it all together.
+#
+# php artisan scrape:now --year=2010 --sem=6 --nocache --verbose
 
 namespace App\Console\Commands;
 
@@ -20,16 +35,21 @@ use Symfony\Component\HttpClient\NativeHttpClient;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Attr;
 use App\Models\Course;
+use App\Models\Description;
 use App\Models\Instructor;
+use App\Models\MeetsWith;
+use App\Models\Special;
+use App\Models\WhenWhere;
 
 class ScrapeNow extends Command
 {
-    protected $signature = 'scrape:now {--start=} {--end=} {--sub=} {--sem=} {--nocache} {--nosave}';
+    protected $signature = 'scrape:now {--year=} {--start=} {--end=} {--sem=} {--sub=} {--nocache} {--nosave}';
 
     protected $description = 'Scrape now';
 
     protected $sections = array();
     protected $data = array();
+    protected $meets_with_download_queue = array();
 
     public function __construct()
     {
@@ -38,17 +58,45 @@ class ScrapeNow extends Command
 
     public function handle()
     {
-        $this->verbose = $this->option('verbose');
-        $this->update_mysql = $this->option('nosave') ? False : True;
 
-        $min_year = $this->option('start');
-        if ($min_year == "") {
-            $min_year = 1999;
+        if ($this->option('year')) {
+            $min_year = $this->option('year');
+            $max_year = $this->option('year');
+            if ($this->option('start')) {
+                print("Don't use --year with --start\n");
+                return;
+            }
+            if ($this->option('end')) {
+                print("Don't use --year with --end\n");
+                return;
+            }
+        } else {
+            if ($this->option('start')) {
+                $min_year = $this->option('start');
+            } else {
+                $min_year = 1999;
+            }
+            if ($this->option('end')) {
+                $max_year = $this->option('end');
+            } else {
+                $max_year = date("Y")+1; // Get one year into the future for giggles
+            }
+        }
+        if ($min_year < 1999) {
+            print("Can't scrape data before 1999.\n");
+            return;
+        }
+        if ($max_year > date("Y")+1) {
+            print("Can't scrape data after ".(date("Y")+1)." because that's too far into the future.\n");
+            return;
         }
 
-        $max_year = $this->option('end');
-        if ($max_year == "") {
-            $max_year = date("Y")+1; // Get one year into the future for giggles
+        if ($this->option('sem')) {
+            $semester = $this->option('sem');
+            if ($semester != 4 and $semester != 6 and $semester != 8) {
+                print("Semester must be 4, 6, or 8 (Spring, Summer, Fall)\n");
+                return;
+            }
         }
 
         $subject = $this->option('sub');
@@ -62,27 +110,17 @@ class ScrapeNow extends Command
             $use_file_cache = 0;
         }
 
-        $semester = $this->option('sem');
-        if ($semester != "") {
-            if ($semester == 4 or $semester == 6 or $semester == 8) {
-                ScrapeNow::get_and_save_semester_data($min_year, $semester, $subject, $use_file_cache);
-            } else {
-                print("Semester must be 4, 6, or 8 (Spring, Summer, Fall)\n");
-            }
-        } else {
-            ScrapeNow::loop_through_years($min_year, $max_year, $subject, $use_file_cache);
-        }
-    }
+        $this->update_mysql = $this->option('nosave') ? False : True;
 
-    public function loop_through_years($min_year, $max_year, $subject, $use_file_cache=false)
-    {
-        if ($this->verbose) {
-            print("loop_through_years($min_year, $max_year, $subject, $use_file_cache=false)\n");
-        }
-        $semesters = array();
+        $this->verbose = $this->option('verbose');
+
         for ($year = $min_year; $year <= $max_year; $year++) {
-            foreach (array(4, 6, 8) as $semester) {
+            if (isset($semester) and $semester != "") {
                 ScrapeNow::get_and_save_semester_data($year, $semester, $subject, $use_file_cache);
+            } else {
+                foreach (array(4, 6, 8) as $semester) {
+                    ScrapeNow::get_and_save_semester_data($year, $semester, $subject, $use_file_cache);
+                }
             }
         }
     }
@@ -118,7 +156,6 @@ class ScrapeNow extends Command
                         'cap' => $courseArray['cap'],
                         'cat' => $courseArray['cat'],
                         'com' => $courseArray['com'],
-                        'des' => $courseArray['des'],
                         'nam' => $courseArray['nam'],
                         'num' => $courseArray['num'],
                         'sec' => $courseArray['sec'],
@@ -141,11 +178,41 @@ class ScrapeNow extends Command
                         if ( array_key_exists('rek', $courseArray) ) {
                             $course->rek = $courseArray['rek'];
                         }
+                        if ( array_key_exists('req', $courseArray) ) {
+                            $course->req = $courseArray['req'];
+                        }
+                        if ( array_key_exists('sea', $courseArray) ) {
+                            $course->sea = $courseArray['sea'];
+                        }
                         if ( array_key_exists('syl', $courseArray) ) {
                             $course->syl = $courseArray['syl'];
                         }
+                        if ( array_key_exists('tba', $courseArray) ) {
+                            $course->tba = $courseArray['tba'];
+                        }
+                        if ( array_key_exists('wai', $courseArray) ) {
+                            $course->wai = $courseArray['wai'];
+                        }
 
                         $course->save();
+
+                        if ( array_key_exists('att', $courseArray) ) {
+                            foreach ( $courseArray['att'] as $attributeText ) {
+                                if ( $attributeText ) {
+                                    $attribute = Attr::firstOrCreate([
+                                        'attr' => $attributeText,
+                                    ]);
+                                    $course->attrs()->save($attribute);
+                                }
+                            }
+                        }
+                        if ( array_key_exists('des', $courseArray) ) {
+                            $description = Description::firstOrCreate([
+                                'des' => $courseArray['des'],
+                            ]);
+                            $course->description()->associate($description);
+                            $course->save();
+                        }
                         if ( array_key_exists('ins', $courseArray) ) {
                             foreach ( $courseArray['ins'] as $instructorArray ) {
                                 if ( $instructorArray ) {
@@ -157,16 +224,39 @@ class ScrapeNow extends Command
                                 }
                             }
                         }
-                        if ( array_key_exists('att', $courseArray) ) {
-                            foreach ( $courseArray['att'] as $attributeText ) {
-                                if ( $attributeText ) {
-                                    $attribute = Attr::firstOrCreate([
-                                        'attr' => $attributeText,
+                        if ( array_key_exists('mee', $courseArray) ) {
+                            foreach ( $courseArray['mee'] as $meetswithArray ) {
+                                if ( $meetswithArray ) {
+                                    $meetswith = MeetsWith::firstOrCreate([
+                                        'cat' => $meetswithArray[0],
+                                        'num' => $meetswithArray[1],
+                                        'sec' => $meetswithArray[2],
                                     ]);
-                                    $course->attrs()->save($attribute);
+                                    $course->meetswith()->save($meetswith);
                                 }
                             }
                         }
+                        if ( array_key_exists('spe', $courseArray) ) {
+                            $special = Special::firstOrCreate([
+                                'spe' => $courseArray['spe'],
+                            ]);
+                            $course->special()->associate($special);
+                            $course->save();
+                        }
+                        if ( array_key_exists('whe', $courseArray) ) {
+                            foreach ( $courseArray['whe'] as $whenwhereArray ) {
+                                if ( $whenwhereArray and sizeof($whenwhereArray) > 0 ) {
+                                    $whenwhere = WhenWhere::firstOrCreate([
+                                        'day' => $whenwhereArray['days'],
+                                        'tim' => $whenwhereArray['times'],
+                                        'loc' => $whenwhereArray['locations'],
+                                    ]);
+                                    $course->whenwhere()->save($whenwhere);
+                                }
+                            }
+                        }
+
+
                     } else {
                         if ($this->verbose) {
                             print("  Updating enr in mysql: $courseArray[yea] $courseArray[sem] $courseArray[cat]-$courseArray[sec] $courseArray[nam]\n");
@@ -218,13 +308,44 @@ class ScrapeNow extends Command
         # Download the main subject
 
         $url = "https://student.apps.utah.edu/uofu/stu/ClassSchedules/main/{$semcode}/class_list.html?subject={$subject}";
+        $semester_data = $this->scrape_page($url, True, []);
 
-        $client = new Client();
-        $crawler = $client->request('GET', $url);
-        $semester_data = $crawler->filter('.class-info')->each(function($item, $i) {
-            return ScrapeNow::scrape_class_list_page($item, $i);
-        });
-        echo "\n";
+        # Parse "meets with" queue
+
+        $dl_2 = array();
+        foreach ( $this->meets_with_download_queue as $keys ) {
+            if ( $keys ) {
+                if ($keys[0] != $subject) {
+                    if (!array_key_exists($keys[0], $dl_2)) {
+                        $dl_2[$keys[0]] = array();
+                    }
+                    if (!array_key_exists($keys[1], $dl_2[$keys[0]])) {
+                        $dl_2[$keys[0]][$keys[1]] = array();
+                    }
+                    if (!array_key_exists($keys[2], $dl_2[$keys[0]][$keys[1]])) {
+                        $dl_2[$keys[0]][$keys[1]][$keys[1]] = 1;
+                    }
+                }
+            }
+        }
+        $this->meets_with_download_queue = array();
+
+        # Download "meets with" subjects
+
+        print_r($dl_2);
+        foreach ( $dl_2 as $subject2 => $courses ) {
+            $course_list = array();
+            foreach ( $courses as $course_number => $val ) {
+                array_push($course_list, $course_number);
+            }
+            $url = "https://student.apps.utah.edu/uofu/stu/ClassSchedules/main/{$semcode}/class_list.html?subject={$subject2}";
+            $meets_with_data = $this->scrape_page($url, False, $course_list);
+            foreach ( $meets_with_data as $courseArray ) {
+                array_push($semester_data, $courseArray);
+            }
+        }
+
+        # Clean up
 
         $cleaned_data = [];
         foreach ( $semester_data as $courseArray ) {
@@ -239,17 +360,37 @@ class ScrapeNow extends Command
         $this->data[$semcode] = $cleaned_data;
 
         if ($this->verbose) {
-//             print_r($this->data[$semcode]);
+            print_r($this->data[$semcode]);
         }
 
-//         echo "\n";
+        echo "\n";
     }
 
-    public function scrape_class_list_page($item, $i)
+    public function scrape_page($url, $parse_meets_with, $course_list)
     {
         if ($this->verbose) {
+            print("  $url\n");
+        }
+        $client = new Client();
+        $crawler = $client->request('GET', $url);
+        $semester_data = $crawler->filter('.class-info')->each(function($item, $i) use ($parse_meets_with, $course_list) {
+            return ScrapeNow::scrape_class_list_page($item, $i, $parse_meets_with, $course_list);
+        });
+        return $semester_data;
+    }
+
+    public function scrape_class_list_page($item, $i, $parse_meets_with, $course_list=[])
+    {
+        $class_number = $item->filter('.class-info')->extract(['id'])[0];
+
+        # This is for debugging one class at a time. TODO
+//         if ($class_number != "4805") {
+//             return;
+//         }
+
+        if ($this->verbose) {
             print("-------------------------------------------------------\n");
-            print("  scrape_class_list_page(\$item, $i)\n");
+            print("  scrape_class_list_page(\$item, $i, $parse_meets_with, \$course_list)\n");
         }
         $course = array();
 
@@ -259,8 +400,20 @@ class ScrapeNow extends Command
 
         # Scrape data
 
-        $catalog_number_text = $item->filter('.class-info h3 > a')->text(); // This value is only used to scrape the sections page
-        $section_text = $item->filter('.class-info h3 > span')->text();
+        $section_1 = $item->filter('.class-info > div')->eq(0);
+
+        $catalog_number_text = $section_1->filter('h3 > a')->text();
+		preg_match('/^(\w+) (\d+)$/', $catalog_number_text, $matches1);
+        $catalog_subject = $matches1[1];
+        $catalog_number = $matches1[2];
+
+        // TODO
+//         print_r($course_list);
+        if ( sizeof($course_list) and ! array_key_exists($catalog_number, $course_list)) {
+            return NULL;
+        }
+
+        $section_text = $section_1->filter('h3 > span')->text();
         if ( $item->matches('.class-info h3 > a:nth-child(3)') ) {
             $course_name_text = $item->filter('.class-info h3 > a:nth-child(3)')->text();
             $syllabus_url = $item->selectLink($course_name_text)->link()->getUri();
@@ -268,15 +421,14 @@ class ScrapeNow extends Command
             $course_name_text = $item->filter('.class-info h3 > span:nth-child(3)')->text();
             $syllabus_url = "";
         }
-        $attrs_array = $item->filter('.class-info .d-md-block > div:nth-child(1) > div > a.btn.btn-outline-dark.btn-sm')->each(function($subitem) {
+        $attrs_array = $section_1->filter('.d-md-block > div:nth-child(1) > div > a.btn.btn-outline-dark.btn-sm')->each(function($subitem) {
             return $subitem->text();
         });
 
         # Store data
 
-		preg_match('/^(\w+) (\d+)$/', $catalog_number_text, $matches1);
-        $course['Catalog Subject'] = $matches1[1];
-        $course['Catalog Number'] = $matches1[2];
+        $course['Catalog Subject'] = $catalog_subject;
+        $course['Catalog Number'] = $catalog_number;
         $course['Course Name'] = $course_name_text;
         $course['Section'] = $section_text;
         if ( $syllabus_url ) {
@@ -349,7 +501,13 @@ class ScrapeNow extends Command
 
         # Scrape data
 
+        $section_3 = $item->filter('.class-info .d-md-block > div:nth-child(2) > span');
+
         # Store data
+
+        if ( sizeof($section_3) > 0 ) {
+            $course['Special Instructions'] = $section_3->text();
+        }
 
         #############
         # Section 4 #
@@ -357,10 +515,44 @@ class ScrapeNow extends Command
 
         # Scrape data
 
-        $special_instructions_text = $item->filter('.class-info .d-md-block > div:nth-child(2)')->text();
-        print("SPECIAL: $special_instructions_text\n");
+        $tba = $item->filter('div.card-footer.mp-1 > div > div > span');
+
+        $day_time_location = $item->filter('div.row.mb-2 > div > table > tbody > tr')->each(function($subitem) {
+            $days = $subitem->filter('th.text-nowrap.text-left.p-0 > span:nth-child(1)')->text();
+            $times = $subitem->filter('th.text-nowrap.text-left.p-0 > span:nth-child(2)')->text();
+            $location = $subitem->filter('th.text-nowrap.text-right.p-0')->text();
+            return [
+                'days' => $days,
+                'times' => $times,
+                'locations' => $location,
+            ];
+        });
+
+        if ($parse_meets_with) {
+            $meets_with = $item->filter('div.card-footer.mp-1 > div:nth-child(2) > div > ul > li')->each(function($subitem) {
+                preg_match('/^([^ ]+) ([^ ]+) ([^ ]+)$/', $subitem->text(), $matches1);
+                if (sizeof($matches1) >= 3) {
+                    return [$matches1[1],$matches1[2],$matches1[3]];
+                } else {
+                    return [];
+                }
+            });
+        }
 
         # Store data
+
+        if ( sizeof($day_time_location) ) {
+            $course['When Where'] = $day_time_location;
+        }
+        if ( sizeof($tba) ) {
+            $course['TBA'] = $tba->text();
+        }
+        if ( $parse_meets_with and sizeof($meets_with) ) {
+            $course['Meets With'] = $meets_with;
+            foreach ($meets_with as $another_class) {
+                array_push($this->meets_with_download_queue, $another_class);
+            }
+        }
 
         if ($this->verbose) {
 //             print_r($course);
@@ -447,7 +639,6 @@ class ScrapeNow extends Command
 
             if ( sizeof($description_page_data['Enrollment Requirement:']) == 1 ) {
                 $course['Enrollment Requirement'] = $description_page_data['Enrollment Requirement:'][0];
-//                 $course['Enrollment Requirement'] = preg_replace('/Prerequisites: /', '', $course['Enrollment Requirement']);
             } else {
                 throw new Exception("There's more than one Enrollment Requirement.");
             }
@@ -474,18 +665,6 @@ class ScrapeNow extends Command
 
         $course2 = array();
 
-        # The Class Number is sometimes missing! >:(
-
-        if (!array_key_exists('Class Number', $course) or $course['Class Number'] == "") {
-            if (array_key_exists('Unused Section Class Number', $course) and $course['Unused Section Class Number'] != "") {
-                print("ERROR! There is no class number on main page! Using sections page class number.\n");
-                $course['Class Number'] = $course['Unused Section Class Number'];
-            } else {
-                print("ERROR! There is no class number on main page or sections page! Using a hash value.\n");
-                $course['Class Number'] = hexdec(substr(sha1($course['Catalog Subject'].$course['Catalog Number']), 0, 7));
-            }
-        }
-
         # Section 1
 
         $course2['cat'] = (int)$course['Catalog Number'];
@@ -511,7 +690,7 @@ class ScrapeNow extends Command
 
         # Section 2
 
-        $course2['num'] = (int)$course['Class Number'];
+        $course2['num'] = (int)$class_number; //$course['Class Number'] <- unreliable
         unset($course['Class Number']);
 
         $course2['com'] = $course['Component'];
@@ -532,6 +711,7 @@ class ScrapeNow extends Command
             unset($course['Requisites']);
         }
 
+        $course2['sea'] = (int)$course['Seats Available'];
         unset($course['Seats Available']);
 
         $course2['typ'] = $course['Type'];
@@ -540,11 +720,32 @@ class ScrapeNow extends Command
         $course2['uni'] = $course['Units'];
         unset($course['Units']);
 
+        $course2['wai'] = $course['Wait List'];
         unset($course['Wait List']);
 
         # Section 3
 
+        if (array_key_exists('Special Instructions',$course)) {
+            $course2['spe'] = $course['Special Instructions'];
+            unset($course['Special Instructions']);
+        }
+
         # Section 4
+
+        if (array_key_exists('TBA',$course)) {
+            $course2['tba'] = $course['TBA'];
+            unset($course['TBA']);
+        }
+
+        if (array_key_exists('When Where',$course)) {
+            $course2['whe'] = $course['When Where'];
+            unset($course['When Where']);
+        }
+
+        if (array_key_exists('Meets With',$course)) {
+            $course2['mee'] = $course['Meets With'];
+            unset($course['Meets With']);
+        }
 
         # Sections page
 

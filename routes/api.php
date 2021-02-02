@@ -19,14 +19,30 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 });
 
 JsonApi::register('default')->routes(function ($api) {
+    $api->resource('attrs')->relationships(function ($relations) {
+        $relations->hasMany('courses');
+    });
     $api->resource('courses')->relationships(function ($relations) {
-        $relations->hasMany('instructors');
         $relations->hasMany('attrs');
+        $relations->hasOne('description');
+        $relations->hasMany('instructors');
+        $relations->hasMany('meets-with');
+        $relations->hasOne('special');
+        $relations->hasMany('when-where');
+    });
+    $api->resource('descriptions')->relationships(function ($relations) {
+        $relations->hasMany('courses');
     });
     $api->resource('instructors')->relationships(function ($relations) {
         $relations->hasMany('courses');
     });
-    $api->resource('attrs')->relationships(function ($relations) {
+    $api->resource('meets-with')->relationships(function ($relations) {
+        $relations->hasMany('courses');
+    });
+    $api->resource('specials')->relationships(function ($relations) {
+        $relations->hasMany('courses');
+    });
+    $api->resource('when-where')->relationships(function ($relations) {
         $relations->hasMany('courses');
     });
 });
