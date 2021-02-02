@@ -82,10 +82,10 @@ class Schema extends SchemaProvider
                     return $resource->instructors;
                 },
             ],
-            'meets-with' => [
+            'meets_with' => [
                 self::SHOW_SELF => false,
                 self::SHOW_RELATED => false,
-                self::SHOW_DATA => isset($includeRelationships['meets-with']),
+                self::SHOW_DATA => isset($includeRelationships['meets_with']),
                 self::DATA => function () use ($resource) {
                     return $resource->meetsWith;
                 },
@@ -98,10 +98,10 @@ class Schema extends SchemaProvider
                     return $resource->special;
                 },
             ],
-            'when-where' => [
+            'when_where' => [
                 self::SHOW_SELF => false,
                 self::SHOW_RELATED => false,
-                self::SHOW_DATA => isset($includeRelationships['when-where']),
+                self::SHOW_DATA => isset($includeRelationships['when_where']),
                 self::DATA => function () use ($resource) {
                     return $resource->whenWhere;
                 },

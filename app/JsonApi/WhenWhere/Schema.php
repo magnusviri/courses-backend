@@ -10,7 +10,7 @@ class Schema extends SchemaProvider
     /**
      * @var string
      */
-    protected $resourceType = 'when-where';
+    protected $resourceType = 'when_where';
 
     /**
      * @param \App\Model\WhenWhere $resource

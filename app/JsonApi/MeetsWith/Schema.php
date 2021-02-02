@@ -10,7 +10,7 @@ class Schema extends SchemaProvider
     /**
      * @var string
      */
-    protected $resourceType = 'meets-with';
+    protected $resourceType = 'meets_with';
 
     /**
      * @param \App\Model\MeetsWith $resource

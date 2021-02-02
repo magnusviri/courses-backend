@@ -26,9 +26,9 @@ JsonApi::register('default')->routes(function ($api) {
         $relations->hasMany('attrs');
         $relations->hasOne('description');
         $relations->hasMany('instructors');
-        $relations->hasMany('meets-with');
+        $relations->hasMany('meets_with');
         $relations->hasOne('special');
-        $relations->hasMany('when-where');
+        $relations->hasMany('when_where');
     });
     $api->resource('descriptions')->relationships(function ($relations) {
         $relations->hasMany('courses');
@@ -36,13 +36,13 @@ JsonApi::register('default')->routes(function ($api) {
     $api->resource('instructors')->relationships(function ($relations) {
         $relations->hasMany('courses');
     });
-    $api->resource('meets-with')->relationships(function ($relations) {
+    $api->resource('meets_with')->relationships(function ($relations) {
         $relations->hasMany('courses');
     });
     $api->resource('specials')->relationships(function ($relations) {
         $relations->hasMany('courses');
     });
-    $api->resource('when-where')->relationships(function ($relations) {
+    $api->resource('when_where')->relationships(function ($relations) {
         $relations->hasMany('courses');
     });
 });
