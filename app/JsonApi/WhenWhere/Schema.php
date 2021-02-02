@@ -35,6 +35,7 @@ class Schema extends SchemaProvider
             'day' => $resource->day,
             'tim' => $resource->tim,
             'loc' => $resource->loc,
+            'tba' => $resource->tba,
         ];
     }
 

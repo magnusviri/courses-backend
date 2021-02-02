@@ -34,7 +34,6 @@ class CreateCoursesTable extends Migration
             $table->string('req')->nullable();
             $table->string('sea')->nullable();
             $table->string('syl')->nullable();
-            $table->string('tba')->nullable();
             $table->string('wai')->nullable();
             $table->bigInteger('description_id')->unsigned()->index()->nullable();
             $table->bigInteger('special_id')->unsigned()->index()->nullable();

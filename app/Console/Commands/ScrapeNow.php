@@ -92,8 +92,8 @@ class ScrapeNow extends Command
         }
 
         if ($this->option('sem')) {
-            $semester = $this->option('sem');
-            if ($semester != 4 and $semester != 6 and $semester != 8) {
+            $semArg = $this->option('sem');
+            if ($semArg != 4 and $semArg != 6 and $semArg != 8) {
                 print("Semester must be 4, 6, or 8 (Spring, Summer, Fall)\n");
                 return;
             }
@@ -115,8 +115,8 @@ class ScrapeNow extends Command
         $this->verbose = $this->option('verbose');
 
         for ($year = $min_year; $year <= $max_year; $year++) {
-            if (isset($semester) and $semester != "") {
-                ScrapeNow::get_and_save_semester_data($year, $semester, $subject, $use_file_cache);
+            if (isset($semArg) and $semArg != "") {
+                ScrapeNow::get_and_save_semester_data($year, $semArg, $subject, $use_file_cache);
             } else {
                 foreach (array(4, 6, 8) as $semester) {
                     ScrapeNow::get_and_save_semester_data($year, $semester, $subject, $use_file_cache);
@@ -187,9 +187,6 @@ class ScrapeNow extends Command
                         if ( array_key_exists('syl', $courseArray) ) {
                             $course->syl = $courseArray['syl'];
                         }
-                        if ( array_key_exists('tba', $courseArray) ) {
-                            $course->tba = $courseArray['tba'];
-                        }
                         if ( array_key_exists('wai', $courseArray) ) {
                             $course->wai = $courseArray['wai'];
                         }
@@ -255,8 +252,12 @@ class ScrapeNow extends Command
                                 }
                             }
                         }
-
-
+                        if ( array_key_exists('tba', $courseArray) ) {
+                            $whenwhere = WhenWhere::firstOrCreate([
+                                'tba' => $courseArray['tba']
+                            ]);
+                            $course->whenwhere()->save($whenwhere);
+                        }
                     } else {
                         if ($this->verbose) {
                             print("  Updating enr in mysql: $courseArray[yea] $courseArray[sem] $courseArray[cat]-$courseArray[sec] $courseArray[nam]\n");

@@ -19,6 +19,7 @@ class CreateWhenWhereTable extends Migration
             $table->string('day')->nullable();
             $table->string('tim')->nullable();
             $table->string('loc')->nullable();
+            $table->string('tba')->nullable();
         });
     }
 

@@ -50,7 +50,6 @@ class Schema extends SchemaProvider
             'syl' => $resource->syl,
             'req' => $resource->req,
             'sea' => $resource->sea,
-            'tba' => $resource->tba,
             'wai' => $resource->wai,
         ];
     }
@@ -69,7 +68,7 @@ class Schema extends SchemaProvider
             'description' => [
                 self::SHOW_SELF => false,
                 self::SHOW_RELATED => false,
-                self::SHOW_DATA => isset($includeRelationships['description']),
+                self::SHOW_DATA => (isset($includeRelationships['description']) && $resource->description),
                 self::DATA => function () use ($resource) {
                     return $resource->description;
                 },
@@ -85,7 +84,7 @@ class Schema extends SchemaProvider
             'meets_with' => [
                 self::SHOW_SELF => false,
                 self::SHOW_RELATED => false,
-                self::SHOW_DATA => isset($includeRelationships['meets_with']),
+                self::SHOW_DATA => (isset($includeRelationships['meets_with']) && sizeof($resource->meetsWith) > 0),
                 self::DATA => function () use ($resource) {
                     return $resource->meetsWith;
                 },
@@ -93,7 +92,7 @@ class Schema extends SchemaProvider
             'special' => [
                 self::SHOW_SELF => false,
                 self::SHOW_RELATED => false,
-                self::SHOW_DATA => isset($includeRelationships['special']),
+                self::SHOW_DATA => (isset($includeRelationships['special']) && $resource->special),
                 self::DATA => function () use ($resource) {
                     return $resource->special;
                 },
@@ -101,7 +100,7 @@ class Schema extends SchemaProvider
             'when_where' => [
                 self::SHOW_SELF => false,
                 self::SHOW_RELATED => false,
-                self::SHOW_DATA => isset($includeRelationships['when_where']),
+                self::SHOW_DATA => (isset($includeRelationships['when_where']) && sizeof($resource->whenWhere) > 0),
                 self::DATA => function () use ($resource) {
                     return $resource->whenWhere;
                 },
