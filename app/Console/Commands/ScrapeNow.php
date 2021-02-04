@@ -18,8 +18,8 @@
 # Other options.
 #
 # php artisan scrape:now --sem=6
-# php artisan scrape:now --nocache
-# php artisan scrape:now --nosave
+# php artisan scrape:now --nocache # will not read or save to the file cache stored in storage/app
+# php artisan scrape:now --nosave  # will not write to mysql
 # php artisan scrape:now --sub=BIOL
 # php artisan scrape:now --verbose
 #
@@ -188,7 +188,13 @@ class ScrapeNow extends Command
                             $course->syl = $courseArray['syl'];
                         }
                         if ( array_key_exists('wai', $courseArray) ) {
-                            $course->wai = $courseArray['wai'];
+                            if ( $courseArray['wai'] == "Yes" ) {
+                                $course->wai = 1;
+                            } else {
+                                $course->wai = 0;
+                            }
+                        } else {
+                            $course->wai = 0;
                         }
 
                         $course->save();
@@ -308,11 +314,11 @@ class ScrapeNow extends Command
 
         # Download the main subject
 
+        $this->meets_with_download_queue = array();
         $url = "https://student.apps.utah.edu/uofu/stu/ClassSchedules/main/{$semcode}/class_list.html?subject={$subject}";
-        $semester_data = $this->scrape_page($url, True, []);
+        $semester_data = $this->scrape_page($url, []);
 
         # Parse "meets with" queue
-
         $dl_2 = array();
         foreach ( $this->meets_with_download_queue as $keys ) {
             if ( $keys ) {
@@ -329,18 +335,15 @@ class ScrapeNow extends Command
                 }
             }
         }
-        $this->meets_with_download_queue = array();
 
         # Download "meets with" subjects
-
-        print_r($dl_2);
         foreach ( $dl_2 as $subject2 => $courses ) {
             $course_list = array();
             foreach ( $courses as $course_number => $val ) {
-                array_push($course_list, $course_number);
+                $course_list[$course_number] = 1;
             }
             $url = "https://student.apps.utah.edu/uofu/stu/ClassSchedules/main/{$semcode}/class_list.html?subject={$subject2}";
-            $meets_with_data = $this->scrape_page($url, False, $course_list);
+            $meets_with_data = $this->scrape_page($url, $course_list);
             foreach ( $meets_with_data as $courseArray ) {
                 array_push($semester_data, $courseArray);
             }
@@ -367,20 +370,20 @@ class ScrapeNow extends Command
         echo "\n";
     }
 
-    public function scrape_page($url, $parse_meets_with, $course_list)
+    public function scrape_page($url, $course_list)
     {
         if ($this->verbose) {
             print("  $url\n");
         }
         $client = new Client();
         $crawler = $client->request('GET', $url);
-        $semester_data = $crawler->filter('.class-info')->each(function($item, $i) use ($parse_meets_with, $course_list) {
-            return ScrapeNow::scrape_class_list_page($item, $i, $parse_meets_with, $course_list);
+        $semester_data = $crawler->filter('.class-info')->each(function($item, $i) use ($course_list) {
+            return ScrapeNow::scrape_class_list_page($item, $i, $course_list);
         });
         return $semester_data;
     }
 
-    public function scrape_class_list_page($item, $i, $parse_meets_with, $course_list=[])
+    public function scrape_class_list_page($item, $i, $course_list=[])
     {
         $class_number = $item->filter('.class-info')->extract(['id'])[0];
 
@@ -391,7 +394,7 @@ class ScrapeNow extends Command
 
         if ($this->verbose) {
             print("-------------------------------------------------------\n");
-            print("  scrape_class_list_page(\$item, $i, $parse_meets_with, \$course_list)\n");
+            print("  scrape_class_list_page(\$item, $i, \$course_list)\n");
         }
         $course = array();
 
@@ -408,9 +411,7 @@ class ScrapeNow extends Command
         $catalog_subject = $matches1[1];
         $catalog_number = $matches1[2];
 
-        // TODO
-//         print_r($course_list);
-        if ( sizeof($course_list) and ! array_key_exists($catalog_number, $course_list)) {
+        if (sizeof($course_list) and ! array_key_exists($catalog_number, $course_list)) {
             return NULL;
         }
 
@@ -529,16 +530,14 @@ class ScrapeNow extends Command
             ];
         });
 
-        if ($parse_meets_with) {
-            $meets_with = $item->filter('div.card-footer.mp-1 > div:nth-child(2) > div > ul > li')->each(function($subitem) {
-                preg_match('/^([^ ]+) ([^ ]+) ([^ ]+)$/', $subitem->text(), $matches1);
-                if (sizeof($matches1) >= 3) {
-                    return [$matches1[1],$matches1[2],$matches1[3]];
-                } else {
-                    return [];
-                }
-            });
-        }
+        $meets_with = $item->filter('div.card-footer.mp-1 > div:nth-child(2) > div > ul > li')->each(function($subitem) {
+            preg_match('/^([^ ]+) ([^ ]+) ([^ ]+)$/', $subitem->text(), $matches1);
+            if (sizeof($matches1) >= 3) {
+                return [$matches1[1],$matches1[2],$matches1[3]];
+            } else {
+                return [];
+            }
+        });
 
         # Store data
 
@@ -548,7 +547,7 @@ class ScrapeNow extends Command
         if ( sizeof($tba) ) {
             $course['TBA'] = $tba->text();
         }
-        if ( $parse_meets_with and sizeof($meets_with) ) {
+        if ( sizeof($meets_with) ) {
             $course['Meets With'] = $meets_with;
             foreach ($meets_with as $another_class) {
                 array_push($this->meets_with_download_queue, $another_class);

@@ -32,25 +32,25 @@ class Schema extends SchemaProvider
         return [
 //            'createdAt' => $resource->created_at,
             'updatedAt' => $resource->updated_at,
-            'cat' => $resource->cat,
-            'sec' => $resource->sec,
-            'com' => $resource->com,
-            'sub' => $resource->sub,
-            'num' => $resource->num,
-            'nam' => $resource->nam,
-            'enr' => $resource->enr,
-            'des' => $resource->des,
             'cap' => $resource->cap,
+            'cat' => $resource->cat,
+            'com' => $resource->com,
+            // 'des' => $resource->des,
+            'enr' => $resource->enr,
+            'fee' => $resource->fee,
+            'nam' => $resource->nam,
+            'num' => $resource->num,
+            // 'rek' => $resource->rek,
+            'req' => $resource->req,
+            // 'sea' => $resource->sea,
+            'sec' => $resource->sec,
+            'sem' => $resource->sem,
+            'sub' => $resource->sub,
+            'syl' => $resource->syl,
             'typ' => $resource->typ,
             'uni' => $resource->uni,
-            'yea' => $resource->yea,
-            'sem' => $resource->sem,
-            'fee' => $resource->fee,
-            'rek' => $resource->rek,
-            'syl' => $resource->syl,
-            'req' => $resource->req,
-            'sea' => $resource->sea,
             'wai' => $resource->wai,
+            'yea' => $resource->yea,
         ];
     }
 
@@ -106,5 +106,9 @@ class Schema extends SchemaProvider
                 },
             ],
         ];
+    }
+
+    public function getResourceLinks($resource) {
+        return null;
     }
 }

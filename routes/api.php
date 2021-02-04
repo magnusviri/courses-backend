@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+ini_set('memory_limit', '256M');
+
 Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
